@@ -31,11 +31,16 @@ auto vector<T, Allocator>::uninitialized_copy(
 }
 
 template <typename T, typename Allocator>
-vector<T, Allocator>::vector(
+ktx::vector<T, Allocator>::vector(
         const std::initializer_list<value_type> items, Allocator alloc
         ) : sz_(items.size()), cap_(sz_*2), alloc_(alloc) {
     data_ = alloc_traits::allocate(alloc_, cap_);
-    uninitialized_copy(items.begin(), items.end(), data_);
+    try {
+        uninitialized_copy(items.begin(), items.end(), data_);
+    } catch (...) {
+        alloc_traits::deallocate(alloc_, data_, cap_);
+        throw;
+    }
 }
 
 

@@ -53,7 +53,7 @@ public:
         std::is_const_v<std::remove_reference_t<Self>>,
         const_reference,
         reference> {
-        return self.data_[index];
+        return std::forward<Self>(self).data_[index];
     }
 
 private:
