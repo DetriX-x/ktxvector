@@ -62,8 +62,15 @@ void vector<T, Allocator>::emplace_back(Args&&... args) {
                 alloc_,
                 newdata + sz_,
                 std::forward<Args>(args)...);
+    } catch (...) {
+        alloc_traits::deallocate(alloc_, newdata, newcap);
+        throw;
+    }
+
+    try {
         uninitialized_move(data_, data_ + sz_, newdata);
     } catch(...) {
+        alloc_traits::destroy(alloc_, newdata + sz_);
         alloc_traits::deallocate(alloc_, newdata, newcap);
         throw;
     }
@@ -114,7 +121,6 @@ vector<T, Allocator>::~vector() {
     clear();
     alloc_traits::deallocate(alloc_, data_, cap_);
 }
-
 
 template<typename T, typename Allocator>
 void vector<T, Allocator>::destroy_all() {

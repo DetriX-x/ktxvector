@@ -57,7 +57,7 @@ public:
 
     template <typename... Args>
     void emplace_back(Args&&... args); 
-    // accessor 
+    // accessors
     template <typename Self>
     constexpr auto operator[](this Self&& self, size_type index) -> 
     std::conditional_t<
@@ -66,6 +66,8 @@ public:
         reference> {
         return std::forward<Self>(self).data_[index];
     }
+
+    size_type size() const { return sz_; }
 
     void reserve(size_type newcap);
 
