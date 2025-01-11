@@ -77,6 +77,7 @@ auto uninitialized_move(
         InputIt last,
         NoThrowForwardIt d_first) -> NoThrowForwardIt;
 
+void destroy_all();
 
 };
 

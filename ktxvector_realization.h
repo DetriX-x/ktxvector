@@ -68,7 +68,7 @@ void vector<T, Allocator>::emplace_back(Args&&... args) {
         throw;
     }
 
-    clear();
+    destroy_all();
     alloc_traits::deallocate(alloc_, data_, cap_);
 
     ++sz_;
@@ -84,12 +84,15 @@ void vector<T, Allocator>::reserve(size_type newcap) {
 
     auto newdata = alloc_traits::allocate(alloc_, newcap);
     try {
-        uninitialized_move(data_, data_ + sz_, newcap);
+        uninitialized_move(data_, data_ + sz_, newdata);
     } catch(...) {
         alloc_traits::deallocate(alloc_, newdata, newcap);
         throw;
     }
+    destroy_all();
+    alloc_traits::deallocate(alloc_, data_, cap_);
     cap_ = newcap;
+    data_ = newdata;
 }
 
 template<typename T, typename Allocator>
@@ -102,9 +105,7 @@ void vector<T, Allocator>::clear() {
     if (0 == cap_) {
         return;
     }
-    for (auto current = data_; current != data_ + sz_; ++current) {
-        alloc_traits::destroy(alloc_, current);
-    }
+    destroy_all();
     sz_ = 0;
 }
 
@@ -115,6 +116,12 @@ vector<T, Allocator>::~vector() {
 }
 
 
+template<typename T, typename Allocator>
+void vector<T, Allocator>::destroy_all() {
+    for (auto current = data_; current != data_ + sz_; ++current) {
+        alloc_traits::destroy(alloc_, current);
+    }
+}
 
 };
 
