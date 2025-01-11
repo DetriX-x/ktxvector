@@ -30,7 +30,7 @@
 *.exe
 *.out
 *.app
-./build/*
+build/
 
 # Language Server Settings
 compile_commands.json
