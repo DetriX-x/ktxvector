@@ -1,5 +1,6 @@
 #include "../ktxvector_realization.h"
 #include <iostream>
+#include <string>
 
 
 
@@ -19,12 +20,21 @@ struct problematic {
     }
 
     problematic(const problematic&) {
-        if((rand() % (3 - 1 + 1)) + 1 == 2) {
-            std::cerr << "BAD COPY CTOR\n";
-            throw 2;
-        }
+        // if((rand() % (3 - 1 + 1)) + 1 == 2) {
+        //     std::cerr << "BAD COPY CTOR\n";
+        //     throw 2;
+        // }
         count++;
         std::cerr << "SUCCESSFUL COPY CTOR " << count << "\n";
+    }
+
+    problematic(problematic&& other) noexcept {
+        // if((rand() % (3 - 1 + 1)) + 1 == 2) {
+        //     std::cerr << "BAD MOVE CTOR\n";
+        //     throw 2;
+        // }
+        count++;
+        std::cerr << "SUCCESSFUL MOVE CTOR " << count << "\n";
     }
     
     ~problematic() {
@@ -48,7 +58,10 @@ int problematic::count = 0;
 int main() {
     std::srand(std::time(nullptr));
     try {
-        ktx::vector<problematic> v({0, 0, 0, 0});
+        ktx::vector<problematic> v;
+        v.push_back(problematic{});
+        v.push_back(problematic{});
+        v.push_back(problematic{});
     } catch (...) {
         std::cout << "err\n";
         return 0;

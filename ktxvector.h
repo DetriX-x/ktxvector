@@ -9,6 +9,7 @@
 namespace ktx {
 
 
+constexpr size_t expansion {2};
 
 template <typename T, typename Allocator = std::allocator<T>>
 class vector {
@@ -46,7 +47,17 @@ public:
     vector(std::initializer_list<value_type> list, 
             Allocator alloc = Allocator());
 
-    // accessors and modifiers
+    // dtor
+    ~vector();
+
+    // modifiers
+    void clear();
+
+    void push_back(value_type value);
+
+    template <typename... Args>
+    void emplace_back(Args&&... args); 
+    // accessor 
     template <typename Self>
     constexpr auto operator[](this Self&& self, size_type index) -> 
     std::conditional_t<
@@ -56,13 +67,16 @@ public:
         return std::forward<Self>(self).data_[index];
     }
 
+    void reserve(size_type newcap);
+
 private:
 template <std::input_iterator InputIt,
          std::forward_iterator NoThrowForwardIt>
-auto uninitialized_copy(
+auto uninitialized_move(
         InputIt first,
         InputIt last,
         NoThrowForwardIt d_first) -> NoThrowForwardIt;
+
 
 };
 
