@@ -57,6 +57,9 @@ public:
 
     template <typename... Args>
     void emplace_back(Args&&... args); 
+
+    void reserve(size_type newcap);
+
     // accessors
     template <typename Self>
     constexpr auto operator[](this Self&& self, size_type index) -> 
@@ -69,7 +72,50 @@ public:
 
     size_type size() const { return sz_; }
 
-    void reserve(size_type newcap);
+    size_type capacity() const { return cap_; }
+
+    [[nodiscard]] bool empty() { return sz_; }
+
+    template <typename Self>
+    constexpr auto data(this Self&& self) -> 
+    std::conditional_t<
+        std::is_const_v<std::remove_reference_t<Self>>,
+        const_pointer,
+        pointer> {
+        return std::forward<Self>(self).data_;
+    }
+
+    template <typename Self>
+    constexpr auto back(this Self&& self) -> 
+    std::conditional_t<
+        std::is_const_v<std::remove_reference_t<Self>>,
+        const_pointer,
+        pointer> {
+        if (0 == self.sz_) {
+            return std::forward<Self>(self).data_[0];
+        } else {
+            return std::forward<Self>(self).data_[self.sz_ - 1];
+        }  
+    }
+
+    template <typename Self>
+    constexpr auto front(this Self&& self) -> 
+    std::conditional_t<
+        std::is_const_v<std::remove_reference_t<Self>>,
+        const_pointer,
+        pointer> {
+        return std::forward<Self>(self).data_[0];
+    }
+
+    template <typename Self>
+    constexpr auto at(this Self&& self, size_type index) -> 
+    std::conditional_t<
+        std::is_const_v<std::remove_reference_t<Self>>,
+        const_reference,
+        reference>;
+
+    
+
 
 private:
 template <std::input_iterator InputIt,

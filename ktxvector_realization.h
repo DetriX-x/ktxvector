@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ktxvector.h"
+#include <exception>
 
 
 namespace ktx {
@@ -57,20 +58,18 @@ void vector<T, Allocator>::emplace_back(Args&&... args) {
 
     auto newcap = cap_ > 0 ? cap_ * expansion : 2;
     auto newdata = alloc_traits::allocate(alloc_, newcap);
+    bool isConstructed {false};
     try {
         alloc_traits::construct(
                 alloc_,
                 newdata + sz_,
                 std::forward<Args>(args)...);
-    } catch (...) {
-        alloc_traits::deallocate(alloc_, newdata, newcap);
-        throw;
-    }
-
-    try {
+        isConstructed = true;
         uninitialized_move(data_, data_ + sz_, newdata);
     } catch(...) {
-        alloc_traits::destroy(alloc_, newdata + sz_);
+        if (isConstructed) {
+            alloc_traits::destroy(alloc_, newdata + sz_);
+        }
         alloc_traits::deallocate(alloc_, newdata, newcap);
         throw;
     }
@@ -96,6 +95,7 @@ void vector<T, Allocator>::reserve(size_type newcap) {
         alloc_traits::deallocate(alloc_, newdata, newcap);
         throw;
     }
+
     destroy_all();
     alloc_traits::deallocate(alloc_, data_, cap_);
     cap_ = newcap;
@@ -112,6 +112,7 @@ void vector<T, Allocator>::clear() {
     if (0 == cap_) {
         return;
     }
+
     destroy_all();
     sz_ = 0;
 }
@@ -128,6 +129,22 @@ void vector<T, Allocator>::destroy_all() {
         alloc_traits::destroy(alloc_, current);
     }
 }
+
+template<typename T, typename Allocator>
+template <typename Self>
+constexpr auto vector<T, Allocator>::at(this Self&& self,
+                                        size_type index) -> 
+std::conditional_t<
+    std::is_const_v<std::remove_reference_t<Self>>,
+    const_reference,
+    reference> {
+        if (index >= self.sz_) {
+            throw std::out_of_range{"Index is out of range of vector"};
+        }
+        return std::forward<Self>(self).data_[index];
+    }
+
+
 
 };
 
