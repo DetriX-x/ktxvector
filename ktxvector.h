@@ -42,10 +42,20 @@ private:
 
 
 public:
-    // constructors
+    // constructors and assign
     vector() : sz_{0u}, cap_{0u}, data_{nullptr}, alloc_{} {}
+
     vector(std::initializer_list<value_type> list, 
             Allocator alloc = Allocator());
+
+    vector(const vector& other);
+
+    vector(vector&& other) : vector{} { swap(*this, other); }
+
+    vector& operator=(vector other) {
+        swap(*this, other);
+        return *this;
+    }
 
     // dtor
     ~vector();
@@ -59,6 +69,10 @@ public:
     void emplace_back(Args&&... args); 
 
     void reserve(size_type newcap);
+
+    // fuck
+    template <typename U, typename A>
+    friend void swap(vector<U, A>& to, vector<U, A>& from);
 
     // accessors
     template <typename Self>
