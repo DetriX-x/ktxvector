@@ -50,7 +50,7 @@ public:
 
     vector(const vector& other);
 
-    vector(vector&& other) : vector{} { swap(*this, other); }
+    vector(vector&& other) noexcept : vector{} { swap(*this, other); }
 
     vector& operator=(vector other) {
         swap(*this, other);
@@ -69,6 +69,14 @@ public:
     void emplace_back(Args&&... args); 
 
     void reserve(size_type newcap);
+
+    void pop_back();
+
+    void shrink_to_fit();
+
+    void resize(size_type count);
+
+    void resize(size_type count, const value_type& value);
 
     // fuck
     template <typename U, typename A>
@@ -141,6 +149,11 @@ auto uninitialized_move(
 
 void destroy_all();
 
+template <std::input_iterator InputIt>
+pointer create_from(Allocator alloc,
+        size_type count,
+        InputIt first,
+        InputIt last);
 };
 
 
