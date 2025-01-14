@@ -43,10 +43,15 @@ private:
 
 public:
     // constructors and assign
-    vector() : sz_{0u}, cap_{0u}, data_{nullptr}, alloc_{} {}
+    vector() : sz_{0}, cap_{0}, data_{nullptr}, alloc_{} {}
 
     vector(std::initializer_list<value_type> list, 
             Allocator alloc = Allocator());
+
+    explicit vector(Allocator a) 
+        : sz_{0}, cap_(0), data_{nullptr}, alloc_{a} {}
+
+    explicit vector(size_type n, const T& val = T(), Allocator a = Allocator());
 
     vector(const vector& other);
 
@@ -61,6 +66,14 @@ public:
     ~vector();
 
     // modifiers
+
+    template<typename... Args>
+    void emplace(const_iterator, Args&&... args);
+
+    void insert(const_iterator pos, value_type value);
+
+    iterator erase(const_iterator pos);
+
     void clear();
 
     void push_back(value_type value);
@@ -81,6 +94,8 @@ public:
     // fuck
     template <typename U, typename A>
     friend void swap(vector<U, A>& to, vector<U, A>& from);
+
+    // comparison
 
     // accessors
     template <typename Self>
@@ -136,24 +151,137 @@ public:
         const_reference,
         reference>;
 
-    
+    // iterator
 
+    iterator begin() {
+        return {data_};
+    }
+
+    iterator end() {
+        return {data_ + sz_};
+    }
+
+    const_iterator begin() const {
+        return {data_};
+    }
+
+    const_iterator end() const {
+        return {data_ + sz_};
+    }
+
+    const_iterator cbegin() const {
+        return {data_};
+    }
+
+    const_iterator cend() const {
+        return {data_ + sz_};
+    }
 
 private:
-template <std::input_iterator InputIt,
-         std::forward_iterator NoThrowForwardIt>
-auto uninitialized_move(
-        InputIt first,
-        InputIt last,
-        NoThrowForwardIt d_first) -> NoThrowForwardIt;
+    template <std::input_iterator InputIt,
+             std::forward_iterator NoThrowForwardIt>
+    auto uninitialized_move(
+            InputIt first,
+            InputIt last,
+            NoThrowForwardIt d_first) -> NoThrowForwardIt;
+    
+    void destroy_all();
+    
+    template <std::input_iterator InputIt>
+    pointer create_from(Allocator alloc,
+            size_type count,
+            InputIt first,
+            InputIt last);
 
-void destroy_all();
+    template<bool isConst>
+    class base_iterator {
+    public:
+        friend class vector<T>;
+        using iterator_category = std::contiguous_iterator_tag;
+        using value_type = vector<T>::value_type;
+        using difference_type = ptrdiff_t;
+        using pointer = std::conditional_t<isConst, const T*, T*>;
+        using reference = std::conditional_t<isConst, const T&, T&>;
 
-template <std::input_iterator InputIt>
-pointer create_from(Allocator alloc,
-        size_type count,
-        InputIt first,
-        InputIt last);
+        base_iterator(const base_iterator&) = default;
+        base_iterator& operator=(const base_iterator&) = default;
+        base_iterator(base_iterator&&) = default;
+        base_iterator& operator=(base_iterator&&) = default;
+        ~base_iterator() = default;
+
+        friend base_iterator operator+(base_iterator it,
+                                               difference_type index) {
+           it.ptr_ += index;
+           return {it};
+        }
+
+        friend base_iterator operator-(base_iterator it,
+                                               difference_type index) {
+           it.ptr_ -= index;
+           return {it};
+        }
+
+        friend base_iterator operator+(difference_type index,
+                                               base_iterator it) {
+           it.ptr_ += index;
+           return {it};
+        }
+
+        friend base_iterator operator-(difference_type index,
+                                               base_iterator it) {
+           it.ptr_ -= index;
+           return {it};
+        }
+
+        iterator& operator+=(difference_type index) {
+            ptr_ += index;
+        }
+
+        iterator& operator-=(difference_type index) {
+            ptr_ -= index;
+        }
+
+        base_iterator& operator++() {
+            ++ptr_;
+            return *this;
+        }
+
+        base_iterator operator++(int) {
+            base_iterator it = *this;
+            ++ptr_;
+            return it;
+        }
+
+        base_iterator& operator--() {
+            --ptr_;
+            return *this;
+        }
+
+        base_iterator operator--(int) {
+            base_iterator it = *this;
+            --ptr_;
+            return it;
+        }
+
+        reference operator*() const {
+            return *ptr_;
+        }
+
+        pointer operator->() const {
+            return ptr_;
+        }
+
+        auto operator<=>(const base_iterator& it) const = default;
+
+        operator base_iterator<true>() const {
+            return ptr_;
+        }
+
+    private:
+        pointer ptr_;
+        base_iterator(T* ptr) noexcept
+            : ptr_{ptr} {}
+    };
 };
 
 

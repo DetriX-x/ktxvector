@@ -9,11 +9,31 @@ namespace ktx {
 
 // public
 
-template <typename T, typename Allocator>
+template<typename T, typename Allocator>
 vector<T, Allocator>::vector(
         const std::initializer_list<value_type> items, Allocator alloc
-        ) : sz_(items.size()), cap_(sz_*2), alloc_(alloc) {
+        ) : sz_(items.size()), cap_(sz_*expansion), alloc_(alloc) {
     data_ = create_from(alloc_, cap_, items.begin(), items.end());
+}
+
+template<typename T, typename Allocator>
+vector<T, Allocator>::vector(size_type n, const T& val, Allocator a) 
+    : sz_{n}, cap_{n ? n * expansion : 2}, alloc_(a) {
+    auto newdata = alloc_traits::allocate(alloc_, cap_);
+    auto current = newdata;
+    try {
+        for (; current != newdata + sz_; ++current) {
+            alloc_traits::construct(alloc_, current, val);
+        }
+    } catch (...) {
+        for (auto first = newdata; first != current; ++first) {
+            alloc_traits::destroy(alloc_, first);
+        }
+        alloc_traits::deallocate(alloc_, newdata, cap_);
+        throw;
+    }
+
+    data_ = newdata;
 }
 
 template<typename T, typename Allocator>
@@ -218,6 +238,40 @@ auto vector<T, Allocator>::uninitialized_move(
         }
         throw;
     }
+}
+
+template<typename T, typename Allocator>
+template<typename... Args>
+void vector<T, Allocator>::emplace(const_iterator pos, Args&&... args) {
+    if (pos == end()) {
+        emplace_back(std::forward<Args>(args)...);
+        return;
+    }
+    if (sz_ < cap_) {
+        alloc_traits::construct(
+                alloc_,
+                data_ + sz_,
+                std::move_if_noexcept(data_[sz_ - 1])
+                );
+        auto it = data_ + sz_ - 1;
+        for (; it != &*pos; --it) {
+            *it = *(it - 1);
+        }
+        value_type value {std::forward<Args>(args)...};
+        *it = std::move(value);
+        ++sz_;
+    }
+    // TODO:
+}
+
+template<typename T, typename Allocator>
+void vector<T, Allocator>::insert(const_iterator pos, value_type value) {
+    emplace(pos, std::move(value));
+}
+
+template<typename T, typename Allocator>
+vector<T, Allocator>::iterator vector<T, Allocator>::erase(const_iterator pos) {
+
 }
 
 // friend
