@@ -91,7 +91,6 @@ public:
 
     void resize(size_type count, const value_type& value);
 
-    // fuck
     template <typename U, typename A>
     friend void swap(vector<U, A>& to, vector<U, A>& from);
 
@@ -184,6 +183,15 @@ private:
             InputIt first,
             InputIt last,
             NoThrowForwardIt d_first) -> NoThrowForwardIt;
+
+    template <std::input_iterator InputIt,
+             std::forward_iterator NoThrowForwardIt,
+             std::predicate<value_type&&> UnaryPred>
+    auto uninitialized_move_if(
+            InputIt first,
+            InputIt last,
+            NoThrowForwardIt d_first,
+            UnaryPred P = [](){return false;}) -> NoThrowForwardIt;
     
     void destroy_all();
     
@@ -208,6 +216,11 @@ private:
         base_iterator(base_iterator&&) = default;
         base_iterator& operator=(base_iterator&&) = default;
         ~base_iterator() = default;
+
+        friend difference_type operator-(base_iterator a,
+                base_iterator b) {
+            return a.ptr_ - b.ptr_;
+        }
 
         friend base_iterator operator+(base_iterator it,
                                                difference_type index) {

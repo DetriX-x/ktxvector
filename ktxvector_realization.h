@@ -219,6 +219,34 @@ vector<T, Allocator>::pointer vector<T, Allocator>::create_from(
 
 template <typename T, typename Allocator>
 template <std::input_iterator InputIt,
+         std::forward_iterator NoThrowForwardIt,
+         std::predicate<T&&> UnaryPred>
+auto vector<T, Allocator>::uninitialized_move_if(
+       InputIt first,
+       InputIt last,
+       NoThrowForwardIt d_first,
+       UnaryPred P) -> NoThrowForwardIt {
+    auto current = d_first;
+    try {
+        for(; first != last; ++first, ++current) {
+            if (P(*first)) {
+                ++current;
+            }
+            alloc_traits::construct(alloc_,
+                            std::addressof(*current),
+                            std::move_if_noexcept(*first));
+        }
+        return current;
+    } catch (...) {
+        for (; d_first != current; ++d_first) {
+            alloc_traits::destroy(alloc_, d_first);
+        }
+        throw;
+    }
+}
+
+template <typename T, typename Allocator>
+template <std::input_iterator InputIt,
          std::forward_iterator NoThrowForwardIt>
 auto vector<T, Allocator>::uninitialized_move(
         InputIt first,
@@ -247,21 +275,57 @@ void vector<T, Allocator>::emplace(const_iterator pos, Args&&... args) {
         emplace_back(std::forward<Args>(args)...);
         return;
     }
-    if (sz_ < cap_) {
+    if (sz_ < cap_) { // if exception throws -> UB
         alloc_traits::construct(
                 alloc_,
                 data_ + sz_,
                 std::move_if_noexcept(data_[sz_ - 1])
                 );
         auto it = data_ + sz_ - 1;
-        for (; it != &*pos; --it) {
+        for (; it != std::addressof(*pos); --it) {
             *it = *(it - 1);
         }
-        value_type value {std::forward<Args>(args)...};
-        *it = std::move(value);
+        alloc_traits::destroy(alloc_, std::addressof(*it));
+        alloc_traits::construct(
+                alloc_,
+                std::addressof(*it),
+                std::forward<Args>(args)...);
+
         ++sz_;
+        return;
     }
-    // TODO:
+    auto newcap = cap_ * expansion;
+    auto newdata = alloc_traits::allocate(alloc_, newcap);
+    auto pos_n = std::distance(cbegin(), pos);
+    bool isConstructed{false};
+
+    try {
+        alloc_traits::construct(
+                alloc_,
+                newdata + pos_n,
+                std::forward<Args>(args)...);
+        isConstructed = true;
+        uninitialized_move_if(
+                begin(),
+                end(),
+                newdata,
+                [pos](auto&& value) {
+                    return std::addressof(value) == std::addressof(*pos);
+                });
+    } catch (...) {
+        if (isConstructed) {
+            alloc_traits::destroy(alloc_, newdata + pos_n);
+        }
+        alloc_traits::deallocate(alloc_, newdata, newcap);
+        throw;
+    }
+
+    destroy_all();
+    alloc_traits::deallocate(alloc_, data_, cap_);
+
+    data_ = newdata;
+    cap_ = newcap;
+    ++sz_;
 }
 
 template<typename T, typename Allocator>
