@@ -302,3 +302,5 @@ std::ostream& operator<<(std::ostream& os, const vector<T, Allocator>& vec);
 
 
 }
+
+#include "ktxvector_realization.h" // IWYU pragma: keep
