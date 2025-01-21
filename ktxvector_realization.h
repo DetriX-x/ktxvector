@@ -334,8 +334,16 @@ void vector<T, Allocator>::insert(const_iterator pos, value_type value) {
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::iterator vector<T, Allocator>::erase(const_iterator pos) {
+vector<T, Allocator>::iterator vector<T, Allocator>::erase(
+        const_iterator pos) {
+    iterator p = begin() + std::distance(cbegin(), pos);
+    for (auto it = p; it != end() - 1; ++it) {
+        *it = std::move(*(it + 1));
+    }
+    alloc_traits::destroy(alloc_, std::addressof(*(cend() - 1)));
+    --sz_;
 
+    return p;
 }
 
 // friend
@@ -345,6 +353,21 @@ void swap(vector<T, Allocator>& to, vector<T, Allocator>& from) {
     std::swap(to.sz_, from.sz_);
     std::swap(to.cap_, from.cap_);
     std::swap(to.data_, from.data_);
+}
+
+// global
+
+template<typename T, typename Allocator>
+std::ostream& operator<<(std::ostream& os,
+        const vector<T, Allocator>& vec) {
+    for (auto it = std::begin(vec); it != std::end(vec); ++it) {
+        os << *it;
+        if (it != std::end(vec) - 1) {
+            os << ' ';
+        }
+    }
+
+    return os;
 }
 
 

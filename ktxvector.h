@@ -297,5 +297,8 @@ private:
     };
 };
 
+template<typename T, typename Allocator>
+std::ostream& operator<<(std::ostream& os, const vector<T, Allocator>& vec);
+
 
 }
