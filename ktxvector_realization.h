@@ -147,11 +147,11 @@ void vector<T, Allocator>::resize(size_type count, const value_type& val) {
         reserve(count);
     }
     if (count < size) {
-        for (auto i = 0; i != size - count; ++i) {
+        for (auto i = 0ULL; i != size - count; ++i) {
             pop_back();
         }
     } else if (count > sz_) {
-        for (auto i = 0; i != count - size; ++i) {
+        for (auto i = 0ULL; i != count - size; ++i) {
             push_back(val);
         }
     }

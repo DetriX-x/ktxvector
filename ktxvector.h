@@ -204,7 +204,7 @@ private:
     template<bool isConst>
     class base_iterator {
     public:
-        friend class vector<T>;
+        friend class vector<T, Allocator>;
         using iterator_category = std::contiguous_iterator_tag;
         using value_type = vector<T>::value_type;
         using difference_type = ptrdiff_t;
