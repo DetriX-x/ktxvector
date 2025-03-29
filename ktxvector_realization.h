@@ -271,7 +271,7 @@ auto vector<T, Allocator>::uninitialized_move(
 template<typename T, typename Allocator>
 template<typename... Args>
 void vector<T, Allocator>::emplace(const_iterator pos, Args&&... args) {
-    if (pos == end()) {
+    if (pos == cend()) {
         emplace_back(std::forward<Args>(args)...);
         return;
     }
