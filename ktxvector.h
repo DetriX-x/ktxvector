@@ -110,7 +110,7 @@ public:
 
     size_type capacity() const { return cap_; }
 
-    [[nodiscard]] bool empty() { return sz_; }
+    [[nodiscard]] bool empty() { return !sz_; }
 
     template <typename Self>
     constexpr auto data(this Self&& self) -> 
