@@ -50,7 +50,7 @@ vector<T, Allocator>::vector(Iter fst, Iter lst): data_{nullptr}, sz_{0}, cap_{0
 }
 
 template<typename T, typename Allocator>
-vector<T, Allocator>::vector(const vector<T, Allocator>& other) {
+vector<T, Allocator>::vector(const vector<T, Allocator>& other): alloc_{std::allocator_traits<Allocator>::select_on_container_copy_construction(other.alloc_)} {
     auto newdata = create_from(
             alloc_,
             other.cap_,
