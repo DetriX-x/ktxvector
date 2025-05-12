@@ -5,6 +5,7 @@
 #include <memory>
 #include <iterator>
 #include <iostream>
+#include <concepts>
 
 namespace ktx {
 
@@ -52,6 +53,9 @@ public:
         : sz_{0}, cap_(0), data_{nullptr}, alloc_{a} {}
 
     explicit vector(size_type n, const T& val = T(), Allocator a = Allocator());
+
+    template <std::forward_iterator Iter>
+    vector(Iter fst, Iter lst);
 
     vector(const vector& other);
 

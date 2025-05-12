@@ -36,6 +36,19 @@ vector<T, Allocator>::vector(size_type n, const T& val, Allocator a)
     data_ = newdata;
 }
 
+template <typename T, typename Allocator>
+template <std::forward_iterator Iter>
+vector<T, Allocator>::vector(Iter fst, Iter lst): data_{nullptr}, sz_{0}, cap_{0} {
+    if constexpr (std::is_base_of_v<std::random_access_iterator_tag,
+            typename std::iterator_traits<Iter>::iterator_category>) {
+        sz_ = std::distance(fst, lst);
+        cap_ = sz_;
+        data_ = create_from(alloc_, cap_, fst, lst);
+    } else {
+        std::copy(fst, lst, std::back_inserter(*this));
+    }
+}
+
 template<typename T, typename Allocator>
 vector<T, Allocator>::vector(const vector<T, Allocator>& other) {
     auto newdata = create_from(
